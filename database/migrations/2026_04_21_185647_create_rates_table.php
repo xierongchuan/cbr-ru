@@ -13,9 +13,9 @@ return new class extends Migration {
         Schema::create('rates', function (Blueprint $table) {
             $table->id();
             $table->foreignId('currency_id')->constrained('currencies')->cascadeOnDelete();
-            $table->date('date');
-            $table->decimal('value', 15, 4);
-            $table->decimal('vunit_rate', 15, 10);
+            $table->date('date'); // Дата курса
+            $table->decimal('value', 15, 4); // Курс валюты (130.0000)
+            $table->decimal('vunit_rate', 15, 10); // Курс единицы (130.0000000000)
             $table->timestamps();
 
             $table->unique(['currency_id', 'date']);
