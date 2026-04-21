@@ -71,7 +71,9 @@ class CurrencySyncService
 
         } catch (\Throwable $e) {
             Log::channel('cbr')->error('Ошибка синхронизации курсов валют: '.$e->getMessage(), [
-                'exception' => $e,
+                'exception_class' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ]);
 
             throw $e;
