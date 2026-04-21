@@ -35,4 +35,6 @@ return [
         ],
     ],
 
+    'cbr_api_url' => env('CBR_API_URL', 'http://www.cbr.ru/scripts/XML_daily.asp')
+
 ];
