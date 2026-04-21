@@ -6,6 +6,7 @@ namespace App\Services\Cbr;
 
 use App\DTO\CurrencyRateDto;
 use App\Exceptions\Cbr\CbrException;
+use App\Exceptions\Cbr\CbrParseException;
 use Throwable;
 
 class CbrXmlParser
@@ -36,7 +37,7 @@ class CbrXmlParser
                 $errors = libxml_get_errors();
                 libxml_clear_errors();
                 $errorMessage = isset($errors[0]) ? trim($errors[0]->message) : 'Unknown XML parsing error';
-                throw new CbrException('Ошибка парсинга XML от ЦБ: '.$errorMessage);
+                throw new CbrParseException('Ошибка парсинга XML от ЦБ: '.$errorMessage);
             }
 
             $dtos = [];
