@@ -5,7 +5,7 @@ services:
         build:
             context: .
             dockerfile: docker/php/Dockerfile
-        image: cbr-php:8.3
+        image: cbr-php:8.5
         container_name: cbr-app
         env_file: .env
         volumes:
