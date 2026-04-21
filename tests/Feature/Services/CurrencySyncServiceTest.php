@@ -73,6 +73,12 @@ class CurrencySyncServiceTest extends TestCase
             {
                 return $this->xml;
             }
+
+            public function getCurrencyRatesRawData(string $cbrId, \Carbon\Carbon $date): string
+            {
+                // Для тестов возвращаем тот же XML, предполагая что он содержит нужную валюту
+                return $this->xml;
+            }
         };
     }
 
@@ -84,6 +90,11 @@ class CurrencySyncServiceTest extends TestCase
         return new class implements ExchangeRatesClientInterface
         {
             public function getDailyRatesRawData(): string
+            {
+                throw new CbrConnectionException('Simulated connection failure');
+            }
+
+            public function getCurrencyRatesRawData(string $cbrId, \Carbon\Carbon $date): string
             {
                 throw new CbrConnectionException('Simulated connection failure');
             }
@@ -109,8 +120,8 @@ class CurrencySyncServiceTest extends TestCase
 
         // Должны сохраниться только USD и EUR, CNY отфильтрован
         $this->assertDatabaseCount('currencies', 2);
-        $this->assertDatabaseHas('currencies', ['char_code' => 'USD']);
-        $this->assertDatabaseHas('currencies', ['char_code' => 'EUR']);
+        $this->assertDatabaseHas('currencies', ['char_code' => 'USD', 'cbr_id' => 'R01235']);
+        $this->assertDatabaseHas('currencies', ['char_code' => 'EUR', 'cbr_id' => 'R01239']);
         $this->assertDatabaseMissing('currencies', ['char_code' => 'CNY']);
     }
 

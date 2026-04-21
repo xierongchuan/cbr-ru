@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateSettingsRequest;
+use App\Models\Currency;
 use App\Services\SettingsService;
 use Illuminate\Http\JsonResponse;
 
@@ -20,7 +21,16 @@ class SettingController extends Controller
      */
     public function index(): JsonResponse
     {
+        $availableCurrencies = Currency::select('char_code', 'name')
+            ->orderBy('char_code')
+            ->get()
+            ->map(fn ($currency) => [
+                'code' => $currency->char_code,
+                'name' => $currency->name,
+            ]);
+
         return response()->json([
+            'available_currencies' => $availableCurrencies,
             'cbr_fetch_currencies' => $this->settingsService->getCbrFetchCurrencies(),
             'widget_currencies' => $this->settingsService->getWidgetCurrencies(),
             'widget_update_interval' => $this->settingsService->getWidgetUpdateInterval(),

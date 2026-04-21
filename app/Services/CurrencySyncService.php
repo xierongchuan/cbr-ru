@@ -22,32 +22,50 @@ class CurrencySyncService
 
     /**
      * Выполняет синхронизацию курсов валют из внешнего API в БД.
+     * Оптимизировано: запрашивает только настроенные валюты, если их CBR ID известны.
      */
     public function sync(): void
     {
         Log::channel('cbr')->info('Начало синхронизации курсов валют с ЦБ РФ.');
 
         try {
-            $xmlRawData = $this->client->getDailyRatesRawData();
-            $dtos = $this->parser->parse($xmlRawData);
-
             $allowedCurrencies = $this->settingsService->getCbrFetchCurrencies();
             $today = Carbon::today();
 
-            DB::transaction(function () use ($dtos, $allowedCurrencies, $today) {
+            // Получаем валюты из БД с их CBR ID
+            $currenciesInDb = Currency::whereIn('char_code', $allowedCurrencies)
+                ->pluck('cbr_id', 'char_code');
+
+            $dtos = collect();
+
+            // Если все валюты имеют CBR ID, запрашиваем индивидуально
+            if ($currenciesInDb->filter()->count() === count($allowedCurrencies)) {
+                Log::channel('cbr')->info('Все валюты имеют CBR ID, запрашиваем индивидуально.');
+                foreach ($allowedCurrencies as $charCode) {
+                    $cbrId = $currenciesInDb[$charCode];
+                    $xmlRawData = $this->client->getCurrencyRatesRawData($cbrId, $today);
+                    $parsedDtos = $this->parser->parse($xmlRawData);
+                    $dtos = $dtos->merge($parsedDtos);
+                }
+            } else {
+                // Иначе запрашиваем все и фильтруем
+                Log::channel('cbr')->info('Не все валюты имеют CBR ID, запрашиваем все валюты.');
+                $xmlRawData = $this->client->getDailyRatesRawData();
+                $allDtos = $this->parser->parse($xmlRawData);
+                $dtos = collect($allDtos)->filter(fn ($dto) => in_array($dto->charCode, $allowedCurrencies, true));
+            }
+
+            DB::transaction(function () use ($dtos, $today) {
                 $savedCount = 0;
 
                 foreach ($dtos as $dto) {
-                    if (! in_array($dto->charCode, $allowedCurrencies, true)) {
-                        continue;
-                    }
-
-                    // Обновляем или создаем валюту
+                    // Обновляем или создаем валюту с CBR ID
                     $currency = Currency::updateOrCreate(
                         ['char_code' => $dto->charCode],
                         [
                             'name' => $dto->name,
                             'nominal' => $dto->nominal,
+                            'cbr_id' => $dto->cbrId,
                         ]
                     );
 
