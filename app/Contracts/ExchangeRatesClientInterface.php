@@ -8,8 +8,6 @@ interface ExchangeRatesClientInterface
 {
     /**
      * Получить сырые данные с курсами валют (XML/JSON/etc).
-     *
-     * @return string
      */
     public function getDailyRatesRawData(): string;
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\DB;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -20,10 +21,8 @@ abstract class TestCase extends BaseTestCase
 
         config(['database.default' => 'sqlite']);
         config(['database.connections.sqlite.database' => ':memory:']);
-        \Illuminate\Support\Facades\DB::purge();
+        DB::purge();
 
         parent::setUp();
     }
 }
-
-

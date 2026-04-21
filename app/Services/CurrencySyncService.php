@@ -18,13 +18,10 @@ class CurrencySyncService
         private readonly ExchangeRatesClientInterface $client,
         private readonly CbrXmlParser $parser,
         private readonly SettingsService $settingsService,
-    ) {
-    }
+    ) {}
 
     /**
      * Выполняет синхронизацию курсов валют из внешнего API в БД.
-     *
-     * @return void
      */
     public function sync(): void
     {
@@ -41,7 +38,7 @@ class CurrencySyncService
                 $savedCount = 0;
 
                 foreach ($dtos as $dto) {
-                    if (!in_array($dto->charCode, $allowedCurrencies, true)) {
+                    if (! in_array($dto->charCode, $allowedCurrencies, true)) {
                         continue;
                     }
 
@@ -73,8 +70,8 @@ class CurrencySyncService
             });
 
         } catch (\Throwable $e) {
-            Log::channel('cbr')->error('Ошибка синхронизации курсов валют: ' . $e->getMessage(), [
-                'exception' => $e
+            Log::channel('cbr')->error('Ошибка синхронизации курсов валют: '.$e->getMessage(), [
+                'exception' => $e,
             ]);
 
             throw $e;

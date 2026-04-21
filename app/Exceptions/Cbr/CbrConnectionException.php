@@ -4,6 +4,4 @@ declare(strict_types=1);
 
 namespace App\Exceptions\Cbr;
 
-class CbrConnectionException extends CbrException
-{
-}
+class CbrConnectionException extends CbrException {}

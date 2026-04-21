@@ -17,14 +17,14 @@ class CbrXmlParserTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->parser = new CbrXmlParser();
+        $this->parser = new CbrXmlParser;
     }
 
     #[Test]
     public function it_parses_valid_windows1251_xml_correctly(): void
     {
         // Создаём валидный XML как PHP-строку, затем конвертируем в Windows-1251
-        $xmlUtf8 = <<<XML
+        $xmlUtf8 = <<<'XML'
 <?xml version="1.0" encoding="windows-1251"?>
 <ValCurs Date="22.04.2026" name="Foreign Currency Market">
     <Valute ID="R01235">
@@ -57,7 +57,7 @@ XML;
     #[Test]
     public function it_correctly_maps_dto_fields_from_xml(): void
     {
-        $xmlUtf8 = <<<XML
+        $xmlUtf8 = <<<'XML'
 <?xml version="1.0" encoding="windows-1251"?>
 <ValCurs Date="22.04.2026" name="Foreign Currency Market">
     <Valute ID="R01235">
@@ -86,7 +86,7 @@ XML;
     #[Test]
     public function it_correctly_converts_comma_decimal_separator(): void
     {
-        $xmlUtf8 = <<<XML
+        $xmlUtf8 = <<<'XML'
 <?xml version="1.0" encoding="windows-1251"?>
 <ValCurs Date="22.04.2026" name="Foreign Currency Market">
     <Valute ID="R01335">
@@ -109,7 +109,7 @@ XML;
     #[Test]
     public function it_returns_empty_array_for_xml_with_no_valutes(): void
     {
-        $xmlUtf8 = <<<XML
+        $xmlUtf8 = <<<'XML'
 <?xml version="1.0" encoding="windows-1251"?>
 <ValCurs Date="22.04.2026" name="Foreign Currency Market">
 </ValCurs>

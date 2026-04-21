@@ -10,8 +10,9 @@ use App\Models\Currency;
 use App\Models\Rate;
 use App\Models\Setting;
 use App\Services\CurrencySyncService;
-use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -22,21 +23,21 @@ class CurrencySyncServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        \Illuminate\Support\Facades\Cache::flush();
-        \Illuminate\Support\Carbon::setTestNow('2026-04-21 12:00:00');
+        Cache::flush();
+        Carbon::setTestNow('2026-04-21 12:00:00');
     }
 
     protected function tearDown(): void
     {
-        \Illuminate\Support\Carbon::setTestNow();
+        Carbon::setTestNow();
         parent::tearDown();
     }
 
     /**
      * Генерирует XML в кодировке Windows-1251 с заданными валютами.
-      *
-      * @param array<array{id: string, charCode: string, name: string, nominal: int, value: string, vunitRate: string}> $valutes
-      * @return string XML в кодировке Windows-1251
+     *
+     * @param  array<array{id: string, charCode: string, name: string, nominal: int, value: string, vunitRate: string}>  $valutes
+     * @return string XML в кодировке Windows-1251
      */
     private function makeXml(array $valutes): string
     {
@@ -60,14 +61,13 @@ class CurrencySyncServiceTest extends TestCase
     /**
      * Создаёт fake-клиент, возвращающий заданный XML.
      *
-     * @param string $xml Содержимое XML в кодировке Windows-1251
+     * @param  string  $xml  Содержимое XML в кодировке Windows-1251
      */
     private function makeFakeClient(string $xml): ExchangeRatesClientInterface
     {
-        return new class($xml) implements ExchangeRatesClientInterface {
-            public function __construct(private readonly string $xml)
-            {
-            }
+        return new class($xml) implements ExchangeRatesClientInterface
+        {
+            public function __construct(private readonly string $xml) {}
 
             public function getDailyRatesRawData(): string
             {
@@ -81,7 +81,8 @@ class CurrencySyncServiceTest extends TestCase
      */
     private function makeFailingClient(): ExchangeRatesClientInterface
     {
-        return new class implements ExchangeRatesClientInterface {
+        return new class implements ExchangeRatesClientInterface
+        {
             public function getDailyRatesRawData(): string
             {
                 throw new CbrConnectionException('Simulated connection failure');

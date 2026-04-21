@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Models;
@@ -13,7 +14,7 @@ class Rate extends Model
     protected $casts = [
         'date' => 'date',
         'value' => 'decimal:4',
-        'vunit_rate' => 'decimal:10'
+        'vunit_rate' => 'decimal:10',
     ];
 
     public function currency(): BelongsTo

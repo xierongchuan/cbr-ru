@@ -17,6 +17,5 @@ readonly class CurrencyRateDto
         public string $name,
         public float $value,
         public float $vunitRate,
-    ) {
-    }
+    ) {}
 }

@@ -21,7 +21,7 @@ class CbrClientTest extends TestCase
             '*' => Http::response('<ValCurs>OK</ValCurs>', 200),
         ]);
 
-        $client = new CbrClient();
+        $client = new CbrClient;
         $result = $client->getDailyRatesRawData();
 
         $this->assertStringContainsString('<ValCurs>', $result);
@@ -37,7 +37,7 @@ class CbrClientTest extends TestCase
         $this->expectException(CbrConnectionException::class);
         $this->expectExceptionMessageMatches('/HTTP Статус: 500/');
 
-        (new CbrClient())->getDailyRatesRawData();
+        (new CbrClient)->getDailyRatesRawData();
     }
 
     #[Test]
@@ -50,7 +50,7 @@ class CbrClientTest extends TestCase
         $this->expectException(CbrConnectionException::class);
         $this->expectExceptionMessageMatches('/HTTP Статус: 404/');
 
-        (new CbrClient())->getDailyRatesRawData();
+        (new CbrClient)->getDailyRatesRawData();
     }
 
     #[Test]
@@ -62,7 +62,7 @@ class CbrClientTest extends TestCase
 
         $this->expectException(CbrTimeoutException::class);
 
-        (new CbrClient())->getDailyRatesRawData();
+        (new CbrClient)->getDailyRatesRawData();
     }
 
     #[Test]
@@ -74,6 +74,6 @@ class CbrClientTest extends TestCase
 
         $this->expectException(CbrConnectionException::class);
 
-        (new CbrClient())->getDailyRatesRawData();
+        (new CbrClient)->getDailyRatesRawData();
     }
 }

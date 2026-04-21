@@ -6,6 +6,4 @@ namespace App\Exceptions\Cbr;
 
 use Exception;
 
-class CbrException extends Exception
-{
-}
+class CbrException extends Exception {}
