@@ -17,7 +17,6 @@ class SettingController extends Controller
 
     /**
      * Получить текущие настройки.
-     * @return JsonResponse
      */
     public function index(): JsonResponse
     {
@@ -30,8 +29,6 @@ class SettingController extends Controller
 
     /**
      * Обновить настройки.
-     * @param UpdateSettingsRequest $request
-     * @return JsonResponse
      */
     public function update(UpdateSettingsRequest $request): JsonResponse
     {
