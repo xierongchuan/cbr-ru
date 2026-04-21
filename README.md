@@ -1,37 +1,171 @@
-# CBR Parser
+# Виджет ЦБ-курсов (CBR Currency Widget)
 
-## **Установка**
+Проект для получения и отображения курсов валют из API Центрального Банка Российской Федерации.
 
-- **Требования:** `podman` или `docker`.
-- Создание конфигурационного файла на основе щаблона:
+## **Установка и запуск**
 
-```bash
-cp .env .env.local
+### Требования
+- `podman` или `docker`
+- `docker-compose` или `podman-compose`
+
+### Шаги установки
+
+1. **Клонируйте репозиторий и перейдите в директорию:**
+   ```bash
+   git clone <repository-url>
+   cd cbr-currency-widget
+   ```
+
+2. **Создайте конфигурационный файл:**
+   ```bash
+   cp .env.example .env
+   ```
+   Отредактируйте `.env` файл, установив необходимые переменные окружения (БД, Redis и т.д.).
+
+3. **Запустите контейнеры:**
+   ```bash
+   podman compose up -d --build
+   # или
+   docker compose up -d --build
+   ```
+
+4. **Контейнеры автоматически выполнят:**
+   - Установку зависимостей Composer
+   - Генерацию ключа Laravel
+   - Миграции базы данных с сидами
+   - Первоначальную синхронизацию курсов валют
+
+### Доступ к приложению
+
+- **Веб-интерфейс:** `http://localhost:8080`
+- **Страница виджета:** `http://localhost:8080/widget`
+- **Страница настроек:** `http://localhost:8080/settings`
+
+## **API**
+
+Приложение предоставляет REST API для получения данных о курсах валют.
+
+### Получение курсов для виджета
+```
+GET /api/v1/widget/rates
 ```
 
-- Сборка и запуск контейнеров (можно использовать и `docker`):
-
-```bash
-podman compose up -d --build
+**Ответ:**
+```json
+{
+  "rates": {
+    "USD": {
+      "currency": {
+        "char_code": "USD",
+        "name": "Доллар США"
+      },
+      "today": {
+        "value": 74.5897,
+        "vunit_rate": 74.5897
+      },
+      "yesterday": {
+        "value": 74.5123,
+        "vunit_rate": 74.5123
+      }
+    }
+  }
+}
 ```
 
-- Установка зависимостей (вообще оно устанавливается автоматически в Dockerfile):
+### Получение настроек
+```
+GET /api/v1/settings
+```
 
+**Ответ:**
+```json
+{
+  "cbr_fetch_currencies": ["USD", "EUR", "CNY"],
+  "widget_currencies": ["USD", "EUR"],
+  "widget_update_interval": 60
+}
+```
+
+### Обновление настроек
+```
+POST /api/v1/settings
+Content-Type: application/json
+
+{
+  "cbr_fetch_currencies": ["USD", "EUR"],
+  "widget_currencies": ["USD", "EUR"],
+  "widget_update_interval": 30
+}
+```
+
+## **Консольные команды**
+
+### Ручная синхронизация курсов
+```bash
+podman compose exec app php artisan cbr:fetch-rates
+```
+
+### Просмотр списка команд
+```bash
+podman compose exec app php artisan list
+```
+
+## **Планировщик задач**
+
+Приложение автоматически синхронизирует курсы валют:
+- При каждом запуске/перезапуске контейнера
+- Ежедневно в 09:00 и 15:00 по расписанию
+
+## **Архитектура**
+
+- **Backend:** Laravel 11, PHP 8.3+
+- **База данных:** MySQL 8.0
+- **Кэш:** Redis 8.6
+- **Frontend:** HTML, CSS (TailwindCSS), Vanilla JavaScript
+- **API:** RESTful API с версионированием (v1)
+
+### Основные компоненты
+- **CurrencySyncService:** Сервис синхронизации курсов
+- **CbrClient:** HTTP-клиент для API ЦБ РФ
+- **CbrXmlParser:** Парсер XML-ответов ЦБ
+- **SettingsService:** Управление настройками приложения
+
+## **Разработка**
+
+### Запуск в режиме разработки
 ```bash
 podman compose exec app composer install
+podman compose exec app npm install
+podman compose exec app npm run dev
 ```
 
-- Генерация ключа:
-
+### Запуск тестов
 ```bash
-podman compose exec app php artisan key:generate
+podman compose exec app composer test
 ```
 
-- Миграция (оно тоже мигрирует автоматически при первом старте в Dockerfile):
-
+### Линтинг кода
 ```bash
-podman compose exec app php artisan migrate --seed
+podman compose exec app ./vendor/bin/pint
 ```
 
-- Доступен по адресу: `http://localhost:8080`.
+## **Логи**
+
+Логи синхронизации сохраняются в `storage/logs/cbr.log` в контейнере.
+
+## **Структура проекта**
+
+```
+├── app/
+│   ├── Console/Commands/FetchCbrRatesCommand.php
+│   ├── Http/Controllers/Api/V1/
+│   ├── Models/
+│   ├── Services/
+│   └── Exceptions/
+├── database/migrations/
+├── docker/
+├── resources/views/
+├── routes/
+└── docker-compose.yml
+```
 

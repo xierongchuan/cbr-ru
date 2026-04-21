@@ -12,5 +12,6 @@ Route::prefix('v1')->group(function () {
     });
 
     // API для настроек
-    Route::apiResource('settings', SettingController::class)->only(['index', 'update']);
+    Route::get('settings', [SettingController::class, 'index']);
+    Route::put('settings', [SettingController::class, 'update']);
 });

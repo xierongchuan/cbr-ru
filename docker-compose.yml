@@ -55,14 +55,31 @@ services:
             - cbrnet
 
     redis:
-        image: redis:8.6
-        container_name: cbr-redis
-        volumes:
-            - redisdata:/data:z
-        ports:
-            - "6379:6379"
-        networks:
-            - cbrnet
+         image: redis:8.6
+         container_name: cbr-redis
+         volumes:
+             - redisdata:/data:z
+         ports:
+             - "6379:6379"
+         networks:
+             - cbrnet
+
+    scheduler:
+         build:
+             context: .
+             dockerfile: docker/php/Dockerfile
+         image: cbr-php:8.5
+         container_name: cbr-scheduler
+         env_file: .env
+         volumes:
+             - .:/var/www/html:z
+         depends_on:
+             - mysql
+             - redis
+         networks:
+             - cbrnet
+         command: ["php", "artisan", "schedule:work"]
+         restart: unless-stopped
 
 volumes:
     dbdata:
