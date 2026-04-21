@@ -17,10 +17,11 @@ class CbrXmlParser
 
     /**
      * Парсит XML ответ от ЦБ и возвращает массив DTO.
-     * Автоматически конвертирует кодировку Windows-1251 → UTF-8.
+     * Автоматически конвертирует кодировку Windows-1251 -> UTF-8.
      *
-     * @param string $xmlContent Сырой XML в кодировке Windows-1251
+     * @param  string  $xmlContent  Сырой XML в кодировке Windows-1251
      * @return array<CurrencyRateDto>
+     *
      * @throws CbrException
      */
     public function parse(string $xmlContent): array
@@ -35,13 +36,13 @@ class CbrXmlParser
                 $errors = libxml_get_errors();
                 libxml_clear_errors();
                 $errorMessage = isset($errors[0]) ? trim($errors[0]->message) : 'Unknown XML parsing error';
-                throw new CbrException('Ошибка парсинга XML от ЦБ: ' . $errorMessage);
+                throw new CbrException('Ошибка парсинга XML от ЦБ: '.$errorMessage);
             }
 
             $dtos = [];
 
             foreach ($xml->Valute as $valute) {
-                // ЦБ использует запятую как разделитель дробной части: 53,4510 → 53.4510
+                // ЦБ использует запятую как разделитель дробной части: 53,4510 -> 53.4510
                 $value = (float) str_replace(',', '.', (string) $valute->Value);
                 $vunitRate = (float) str_replace(',', '.', (string) $valute->VunitRate);
 
@@ -62,13 +63,14 @@ class CbrXmlParser
             if ($e instanceof CbrException) {
                 throw $e;
             }
-            throw new CbrException('Непредвиденная ошибка при парсинге XML: ' . $e->getMessage(), 0, $e);
+            throw new CbrException('Непредвиденная ошибка при парсинге XML: '.$e->getMessage(), 0, $e);
         }
     }
 
     /**
      * Конвертирует строку из Windows-1251 в UTF-8 и обновляет XML-декларацию.
-     * @param string $content Содержимое XML в кодировке Windows-1251
+     *
+     * @param  string  $content  Содержимое XML в кодировке Windows-1251
      * @return string Содержимое XML в кодировке UTF-8
      */
     private function convertToUtf8(string $content): string
