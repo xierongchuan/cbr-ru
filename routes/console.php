@@ -10,7 +10,9 @@ Artisan::command('inspire', function () {
 
 // Планировщик задач
 Schedule::command('cbr:fetch-rates')
-    ->dailyAt('09:00')  // Каждый день в 9:00
-    ->dailyAt('15:00')  // Каждый день в 15:00
-    ->withoutOverlapping()  // Предотвращает пересечение задач
-    ->runInBackground();   // Запуск в фоне
+    ->dailyAt('08:00')  // Каждый день в 8:00
+    ->dailyAt('13:00')  // Каждый день в 13:00
+    ->dailyAt('18:00')  // Каждый день в 18:00
+    ->dailyAt('22:00')  // Каждый день в 22:00
+    ->withoutOverlapping()
+    ->runInBackground();
