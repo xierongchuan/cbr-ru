@@ -12,11 +12,9 @@ return new class extends Migration {
     {
         Schema::create('currencies', function (Blueprint $table) {
             $table->id();
-            $table->char('char_code', 3)->unique();
-            $table->string('name')->unique();
-            $table->integer('nominal');
-            $table->boolean('is_fetched')->default(true);
-            $table->boolean('is_visible')->default(true);
+            $table->char('char_code', 3)->unique(); // Код валюты (USD, EUR, RUB и т.п.)
+            $table->string('name')->unique(); // Название валюты (Доллар США, Евро, Российский рубль и т.п.)
+            $table->integer('nominal'); // Номинал (1, 10, 100, и т.п.)
             $table->timestamps();
         });
     }
