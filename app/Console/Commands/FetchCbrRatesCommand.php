@@ -23,8 +23,9 @@ use Throwable;
  *
  * По умолчанию синхронизирует курсы на сегодня и вчера.
  * С флагом --all загружает все доступные валюты.
+ * С флагом --tomorrow включает загрузку курсов на завтра (если доступны).
  */
-#[Signature('cbr:fetch-rates {--date=today : Date to fetch (today|yesterday|both)} {--all : Fetch all currencies instead of configured list}')]
+#[Signature('cbr:fetch-rates {--date=today : Date to fetch (today|yesterday|both|tomorrow)} {--all : Fetch all currencies} {--tomorrow : Also fetch tomorrow rates if available}')]
 #[Description('Fetch and sync currency rates from CBR API')]
 class FetchCbrRatesCommand extends Command
 {
@@ -32,13 +33,15 @@ class FetchCbrRatesCommand extends Command
     {
         $dateOption = $this->option('date');
         $all = (bool) $this->option('all');
+        $tomorrow = (bool) ($this->option('tomorrow') ?? false);
         $settingsService = app(SettingsService::class);
         $offset = $settingsService->getFetchDateOffset();
 
         try {
             return match ($dateOption) {
                 'yesterday' => $this->sync('yesterday', $all, $offset),
-                'both' => $this->syncBoth($all, $offset),
+                'tomorrow' => $this->sync('tomorrow', $all, $offset),
+                'both' => $this->syncBoth($all, $offset, $tomorrow),
                 default => $this->sync('today', $all, $offset),
             };
         } catch (Throwable $e) {
@@ -52,6 +55,7 @@ class FetchCbrRatesCommand extends Command
     {
         $baseDate = match ($dateType) {
             'yesterday' => Carbon::yesterday(),
+            'tomorrow' => Carbon::tomorrow(),
             default => Carbon::today(),
         };
 
@@ -70,11 +74,13 @@ class FetchCbrRatesCommand extends Command
         return self::SUCCESS;
     }
 
-    private function syncBoth(bool $all, int $offset): int
+    private function syncBoth(bool $all, int $offset, bool $includeTomorrow): int
     {
         $yesterday = Carbon::yesterday()->addDays($offset);
         $today = Carbon::today()->addDays($offset);
+        $tomorrow = Carbon::tomorrow()->addDays($offset);
 
+        // Вчера
         $this->info("Starting CBR rates synchronization for {$yesterday->format('d.m.Y')} (offset: {$offset})...");
         if ($all) {
             $this->syncAll($yesterday);
@@ -83,6 +89,7 @@ class FetchCbrRatesCommand extends Command
         }
         $this->info("CBR rates synchronization for {$yesterday->format('d.m.Y')} completed successfully.");
 
+        // Сегодня
         $this->info("Starting CBR rates synchronization for {$today->format('d.m.Y')} (offset: {$offset})...");
         if ($all) {
             $this->syncAll($today);
@@ -90,6 +97,21 @@ class FetchCbrRatesCommand extends Command
             app(CurrencySyncService::class)->sync($today);
         }
         $this->info("CBR rates synchronization for {$today->format('d.m.Y')} completed successfully.");
+
+        // Завтра (если включено)
+        if ($includeTomorrow) {
+            $this->info("Starting CBR rates synchronization for {$tomorrow->format('d.m.Y')} (offset: {$offset})...");
+            try {
+                if ($all) {
+                    $this->syncAll($tomorrow);
+                } else {
+                    app(CurrencySyncService::class)->sync($tomorrow);
+                }
+                $this->info("CBR rates synchronization for {$tomorrow->format('d.m.Y')} completed successfully.");
+            } catch (Throwable $e) {
+                $this->warn(" завтрашних курсов (могут быть недоступны): ".$e->getMessage());
+            }
+        }
 
         return self::SUCCESS;
     }
