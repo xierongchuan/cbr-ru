@@ -112,14 +112,20 @@
             }
         }
 
+        // Форматирует дату в локальном времени клиента (YYYY-MM-DD)
+        function formatLocalDate(date) {
+            return date.toLocaleDateString('en-CA');
+        }
+
         // Функция загрузки курсов
         async function loadRates() {
             showLoading();
 
             try {
                 const currencies = await loadSettings();
-                const today = new Date().toISOString().split('T')[0];
-                const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+                // Используем локальное время клиента, а не UTC
+                const today = formatLocalDate(new Date());
+                const yesterday = formatLocalDate(new Date(Date.now() - 86400000));
 
                 const url = `/api/v1/rates?date=${today}&compare_date=${yesterday}&currencies=${currencies.join(',')}`;
 
