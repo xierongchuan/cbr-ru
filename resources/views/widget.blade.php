@@ -15,8 +15,8 @@
     <div class="container mx-auto px-4 py-8 max-w-6xl">
         <!-- Header -->
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">Курсы валют ЦБ РФ</h1>
-            <p class="text-gray-600">Официальные курсы иностранных валют к рублю</p>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Курсы валют ЦБ РФ ₽</h1>
+            <p class="text-gray-600">Официальные курсы иностранных валют к рублю ₽</p>
         </div>
 
         <!-- Loading State -->
@@ -234,17 +234,17 @@
                 <div class="space-y-3">
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600">За номинал${nominal > 1 ? ` (${nominal} шт)` : ''}</span>
-                        <span class="text-2xl font-bold text-gray-900 font-mono">${currentValue}</span>
+                        <span class="text-2xl font-bold text-gray-900 font-mono">${currentValue} ₽</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600">За единицу</span>
-                        <span class="text-lg font-semibold text-gray-700 font-mono">${vunitRate}</span>
+                        <span class="text-lg font-semibold text-gray-700 font-mono">${vunitRate} ₽</span>
                     </div>
                     ${rateData.compare ? `
                         <div class="pt-3 border-t border-gray-100">
                             <div class="flex justify-between items-center text-sm">
                                 <span class="text-gray-600">Вчера</span>
-                                <span class="font-mono text-gray-700">${formatCurrency(rateData.compare.value)}</span>
+                                <span class="font-mono text-gray-700">${formatCurrency(rateData.compare.value)} ₽</span>
                             </div>
                         </div>
                     ` : ''}
