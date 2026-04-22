@@ -163,7 +163,6 @@
             let changeIndicator = '';
             let changeClass = '';
             let changeText = '';
-            let changeBgClass = '';
             let trendIcon = '';
 
             if (rateData.today && rateData.yesterday) {
@@ -175,24 +174,21 @@
                 if (change > 0) {
                     changeIndicator = '+' + formatCurrency(change);
                     changeText = `+${changePercent}%`;
-                    changeClass = 'text-green-600 bg-green-50';
-                    changeBgClass = 'bg-green-500';
-                    trendIcon = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    changeClass = 'text-red-600 bg-red-50';
+                    trendIcon = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                     </svg>`;
                 } else if (change < 0) {
                     changeIndicator = formatCurrency(change);
                     changeText = `${changePercent}%`;
-                    changeClass = 'text-red-600 bg-red-50';
-                    changeBgClass = 'bg-red-500';
-                    trendIcon = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    changeClass = 'text-green-600 bg-green-50';
+                    trendIcon = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                     </svg>`;
                 } else {
                     changeIndicator = '0.0000';
                     changeText = '0.00%';
                     changeClass = 'text-gray-600 bg-gray-50';
-                    changeBgClass = 'bg-gray-400';
                     trendIcon = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10 11.414l2.707 2.293a1 1 0 001.414-1.414l-4-4a1 1 0 01-.016-1.405l4-4.111a1 1 0 00-1.414-1.414L10 8.586 7.293 6.293a1 1 0 00-1.414 1.414l4 4.111a1 1 0 01.016 1.405l-4 4z" clip-rule="evenodd"></path>
                     </svg>`;
@@ -206,17 +202,12 @@
 
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-4">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 ${changeBgClass} rounded-full flex items-center justify-center text-white font-bold text-sm">
-                            ${currencyCode}
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">${currencyCode}</h3>
+                            ${nominal > 1 ? `<span class="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">${nominal} шт</span>` : ''}
                         </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">${currencyCode}</h3>
-                                ${nominal > 1 ? `<span class="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">${nominal} шт</span>` : ''}
-                            </div>
-                            <p class="text-sm text-gray-600">${currencyName}</p>
-                        </div>
+                        <p class="text-sm text-gray-600">${currencyName}</p>
                     </div>
                     ${rateData.today && rateData.yesterday ? `
                         <div class="${changeClass} px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
