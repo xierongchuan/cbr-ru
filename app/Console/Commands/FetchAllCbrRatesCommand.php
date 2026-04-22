@@ -8,6 +8,7 @@ use App\Contracts\ExchangeRatesClientInterface;
 use App\Models\Currency;
 use App\Models\Rate;
 use App\Services\Cbr\CbrXmlParser;
+use App\Services\SettingsService;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -16,13 +17,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-#[Signature('cbr:fetch-all-rates')]
-#[Description('Fetch and sync all currency rates from CBR API (ignores settings)')]
+#[Signature('cbr:fetch-all-rates {--date=today : Date to fetch (today|yesterday)}')]
+#[Description('Fetch and sync ALL currency rates from CBR API for specified date')]
 class FetchAllCbrRatesCommand extends Command
 {
     public function __construct(
         private readonly ExchangeRatesClientInterface $client,
         private readonly CbrXmlParser $parser,
+        private readonly SettingsService $settingsService,
     ) {
         parent::__construct();
     }
@@ -32,15 +34,24 @@ class FetchAllCbrRatesCommand extends Command
      */
     public function handle(): int
     {
-        $this->info('Starting CBR all rates synchronization...');
+        $dateOption = $this->option('date');
+        $baseDate = match ($dateOption) {
+            'yesterday' => Carbon::yesterday(),
+            default => Carbon::today(),
+        };
+
+        // Применяем смещение даты из настроек
+        $offset = $this->settingsService->getFetchDateOffset();
+        $date = $baseDate->copy()->addDays($offset);
+
+        $this->info("Starting CBR ALL rates synchronization for {$date->format('d.m.Y')}...");
 
         try {
-            $xmlRawData = $this->client->getDailyRatesRawData();
+            // Загружаем все валюты на указанную дату
+            $xmlRawData = $this->client->getDailyRatesRawData($date);
             $dtos = $this->parser->parse($xmlRawData);
 
-            $today = Carbon::today();
-
-            DB::transaction(function () use ($dtos, $today) {
+            DB::transaction(function () use ($dtos, $date) {
                 $savedCount = 0;
 
                 foreach ($dtos as $dto) {
@@ -54,11 +65,11 @@ class FetchAllCbrRatesCommand extends Command
                         ]
                     );
 
-                    // Сохраняем курс валюты на сегодня
+                    // Сохраняем курс валюты на указанную дату
                     Rate::updateOrCreate(
                         [
                             'currency_id' => $currency->id,
-                            'date' => $today,
+                            'date' => $date,
                         ],
                         [
                             'value' => $dto->value,
@@ -69,19 +80,14 @@ class FetchAllCbrRatesCommand extends Command
                     $savedCount++;
                 }
 
-                Log::channel('cbr')->info("Синхронизация всех валют завершена. Обновлено: {$savedCount}");
+                Log::channel('cbr')->info("Синхронизация всех валют за {$date->format('d.m.Y')} завершена. Обновлено: {$savedCount}");
             });
 
-            $this->info('CBR all rates synchronization completed successfully.');
+            $this->info('CBR ALL rates synchronization completed successfully.');
 
             return self::SUCCESS;
         } catch (Throwable $e) {
-            $this->error('CBR all rates synchronization failed: '.$e->getMessage());
-            Log::channel('cbr')->error('Ошибка синхронизации всех валют: '.$e->getMessage(), [
-                'exception_class' => get_class($e),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
+            $this->error('CBR ALL rates synchronization failed: '.$e->getMessage());
 
             return self::FAILURE;
         }

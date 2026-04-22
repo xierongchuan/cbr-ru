@@ -25,5 +25,10 @@ class SettingsSeeder extends Seeder
             ['key' => 'widget_update_interval'],
             ['value' => 60]
         );
+
+        Setting::updateOrCreate(
+            ['key' => 'fetch_date_offset'],
+            ['value' => 0] // 0 = сегодня, 1 = завтра
+        );
     }
 }

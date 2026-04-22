@@ -47,7 +47,7 @@
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <form id="settingsForm" class="p-8 space-y-8">
-                <!-- Валюты для виджета -->
+                <!-- Подгружаемые валюты -->
                 <div class="space-y-4">
                     <div class="flex items-center space-x-3">
                         <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -56,25 +56,25 @@
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-900">Валюты в виджете</h3>
-                            <p class="text-sm text-gray-600">Выберите валюты, которые будут отображаться в виджете. Выбранные валюты автоматически загружаются из ЦБ РФ.</p>
+                            <h3 class="text-lg font-semibold text-gray-900">Подгружаемые валюты</h3>
+                            <p class="text-sm text-gray-600">Валюты, которые будут загружаться из ЦБ РФ</p>
                         </div>
                     </div>
 
-                    <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center space-x-2">
                                 <input
                                     type="checkbox"
-                                    id="selectAll"
+                                    id="selectAllCbr"
                                     class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                                 >
-                                <label for="selectAll" class="text-sm font-medium text-gray-700">Выбрать все</label>
+                                <label for="selectAllCbr" class="text-sm font-medium text-gray-700">Выбрать все</label>
                             </div>
                             <div class="relative">
                                 <input
                                     type="text"
-                                    id="currencySearch"
+                                    id="currencySearchCbr"
                                     placeholder="Поиск валют..."
                                     class="w-48 pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 >
@@ -83,8 +83,48 @@
                                 </svg>
                             </div>
                         </div>
-                        <div id="currencies" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-96 overflow-y-auto">
-                            <!-- Currency options will be loaded via JS -->
+                        <div id="cbrCurrencies" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-64 overflow-y-auto">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Валюты в виджете -->
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Валюты в виджете</h3>
+                            <p class="text-sm text-gray-600">Выберите валюты для отображения в виджете.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id="selectAllWidget"
+                                    class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
+                                >
+                                <label for="selectAllWidget" class="text-sm font-medium text-gray-700">Выбрать все</label>
+                            </div>
+                            <div class="relative">
+                                <input
+                                    type="text"
+                                    id="currencySearchWidget"
+                                    placeholder="Поиск валют..."
+                                    class="w-48 pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                >
+                                <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div id="widgetCurrencies" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-64 overflow-y-auto">
                         </div>
                     </div>
                 </div>
@@ -136,9 +176,9 @@
 
                 <!-- Кнопки действий -->
                 <div class="flex justify-between items-center pt-6 border-t border-gray-200">
-                    <a href="/" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-200">
+                    <a href="/widget" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition duration-200">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                         </svg>
                         К виджету
                     </a>
@@ -205,14 +245,24 @@
                 e.target.value = value;
             });
 
-            // Поиск валют
-            document.getElementById('currencySearch').addEventListener('input', (e) => {
-                filterCurrencies('currencies', e.target.value);
+            // Поиск валют для ЦБ
+            document.getElementById('currencySearchCbr').addEventListener('input', (e) => {
+                filterCurrencies('cbrCurrencies', e.target.value);
             });
 
-            // Выбор всех
-            document.getElementById('selectAll').addEventListener('change', (e) => {
-                selectAllCurrencies('currencies', e.target.checked);
+            // Выбор всех для ЦБ
+            document.getElementById('selectAllCbr').addEventListener('change', (e) => {
+                selectAllCurrencies('cbrCurrencies', e.target.checked);
+            });
+
+            // Поиск валют для виджета
+            document.getElementById('currencySearchWidget').addEventListener('input', (e) => {
+                filterCurrencies('widgetCurrencies', e.target.value);
+            });
+
+            // Выбор всех для виджета
+            document.getElementById('selectAllWidget').addEventListener('change', (e) => {
+                selectAllCurrencies('widgetCurrencies', e.target.checked);
             });
 
             // Сброс настроек
@@ -226,7 +276,7 @@
 
             items.forEach(item => {
                 const currencyData = item.getAttribute('data-currency');
-                const isVisible = !query || currencyData.includes(query.toLowerCase());
+                const isVisible = !query || currencyData.includes(query.toLowerCase().trim());
                 item.style.display = isVisible ? '' : 'none';
             });
         }
@@ -249,9 +299,6 @@
                 // Сброс к значениям по умолчанию
                 document.getElementById('updateInterval').value = 60;
                 document.getElementById('updateIntervalNumber').value = 60;
-
-                // Сброс чекбоксов
-                selectAllCurrencies('currencies', false);
 
                 // Установка значений по умолчанию
                 const defaultCbr = ['USD', 'EUR', 'CNY'];
@@ -301,8 +348,10 @@
                 document.getElementById('updateInterval').value = data.widget_update_interval;
                 document.getElementById('updateIntervalNumber').value = data.widget_update_interval;
 
-                // Рендер чекбоксов для валют
-                renderCurrencyCheckboxes('currencies', data.widget_currencies);
+                // Рендер чекбоксов для валют ЦБ
+                renderCurrencyCheckboxes('cbrCurrencies', data.cbr_fetch_currencies || [], 'cbr');
+                // Рендер чекбоксов для валют виджета
+                renderCurrencyCheckboxes('widgetCurrencies', data.widget_currencies || [], 'widget');
 
             } catch (error) {
                 showMessage('Ошибка загрузки настроек: ' + error.message, 'error');
@@ -310,22 +359,24 @@
         }
 
         // Функция рендера чекбоксов для валют
-        function renderCurrencyCheckboxes(containerId, selectedCurrencies) {
+        function renderCurrencyCheckboxes(containerId, selectedCurrencies, type) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
+
+            const colorClass = type === 'cbr' ? 'blue' : 'green';
 
             availableCurrencies.forEach(currency => {
                 const isChecked = selectedCurrencies.includes(currency.code);
                 const checkbox = document.createElement('label');
                 checkbox.className = 'flex items-center p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors';
-                checkbox.setAttribute('data-currency', currency.code.toLowerCase());
+                checkbox.setAttribute('data-currency', (currency.code + ' ' + currency.name).toLowerCase());
                 checkbox.innerHTML = `
                     <input
                         type="checkbox"
-                        name="${containerId === 'cbrCurrencies' ? 'cbr_fetch_currencies' : 'widget_currencies'}[]"
+                        name="${type === 'cbr' ? 'cbr_fetch_currencies[]' : 'widget_currencies[]'}"
                         value="${currency.code}"
                         ${isChecked ? 'checked' : ''}
-                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        class="w-4 h-4 text-${colorClass}-600 bg-gray-100 border-gray-300 rounded focus:ring-${colorClass}-500 focus:ring-2"
                     >
                     <div class="ml-3 flex items-center justify-between flex-1">
                         <div>
@@ -344,11 +395,17 @@
 
             const formData = new FormData(document.getElementById('settingsForm'));
             const data = {
+                cbr_fetch_currencies: formData.getAll('cbr_fetch_currencies[]'),
                 widget_currencies: formData.getAll('widget_currencies[]'),
                 widget_update_interval: parseInt(formData.get('widget_update_interval')),
             };
 
             // Валидация
+            if (data.cbr_fetch_currencies.length === 0) {
+                showMessage('Выберите хотя бы одну валюту для загрузки из ЦБ', 'error');
+                return;
+            }
+
             if (data.widget_currencies.length === 0) {
                 showMessage('Выберите хотя бы одну валюту для отображения в виджете', 'error');
                 return;

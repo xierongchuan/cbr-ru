@@ -69,14 +69,8 @@ class CurrencySyncServiceTest extends TestCase
         {
             public function __construct(private readonly string $xml) {}
 
-            public function getDailyRatesRawData(): string
+            public function getDailyRatesRawData(?\Carbon\Carbon $date = null): string
             {
-                return $this->xml;
-            }
-
-            public function getCurrencyRatesRawData(string $cbrId, \Carbon\Carbon $date): string
-            {
-                // Для тестов возвращаем тот же XML, предполагая что он содержит нужную валюту
                 return $this->xml;
             }
         };
@@ -89,12 +83,7 @@ class CurrencySyncServiceTest extends TestCase
     {
         return new class implements ExchangeRatesClientInterface
         {
-            public function getDailyRatesRawData(): string
-            {
-                throw new CbrConnectionException('Simulated connection failure');
-            }
-
-            public function getCurrencyRatesRawData(string $cbrId, \Carbon\Carbon $date): string
+            public function getDailyRatesRawData(?\Carbon\Carbon $date = null): string
             {
                 throw new CbrConnectionException('Simulated connection failure');
             }

@@ -8,6 +8,7 @@ use App\Contracts\ExchangeRatesClientInterface;
 use App\Exceptions\Cbr\CbrConnectionException;
 use App\Exceptions\Cbr\CbrException;
 use App\Exceptions\Cbr\CbrTimeoutException;
+use Carbon\Carbon;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Throwable;
@@ -32,15 +33,21 @@ class CbrClient implements ExchangeRatesClientInterface
      * @throws CbrTimeoutException
      * @throws CbrException
      */
-    public function getDailyRatesRawData(): string
+    public function getDailyRatesRawData(?Carbon $date = null): string
     {
+        $url = $this->url;
+        if ($date) {
+            $url .= '?date_req='.$date->format('d/m/Y');
+        }
+
         try {
             $response = Http::timeout(self::TIMEOUT_SECONDS)
-                ->get($this->url);
+                ->get($url);
 
             if ($response->failed()) {
+                $dateStr = $date ? ' за '.$date->format('d.m.Y') : '';
                 throw new CbrConnectionException(
-                    sprintf('Не удалось получить данные от ЦБ РФ. HTTP Статус: %d', $response->status())
+                    sprintf('Не удалось получить данные от ЦБ РФ%s. HTTP Статус: %d', $dateStr, $response->status())
                 );
             }
 
@@ -56,50 +63,6 @@ class CbrClient implements ExchangeRatesClientInterface
                 throw $e;
             }
             throw new CbrException('Непредвиденная ошибка при запросе к ЦБ РФ: '.$e->getMessage(), 0, $e);
-        }
-    }
-
-    /**
-     * Получить курс конкретной валюты на указанную дату через XML_dynamic.asp.
-     *
-     * @param  string  $cbrId  ID валюты в формате ЦБ (например, R01235)
-     * @param  Carbon  $date  Дата курса
-     * @return string XML с данными курса
-     *
-     * @throws CbrConnectionException
-     * @throws CbrTimeoutException
-     * @throws CbrException
-     */
-    public function getCurrencyRatesRawData(string $cbrId, \Carbon\Carbon $date): string
-    {
-        $dynamicUrl = str_replace('XML_daily.asp', 'XML_dynamic.asp', $this->url);
-
-        try {
-            $response = Http::timeout(self::TIMEOUT_SECONDS)
-                ->get($dynamicUrl, [
-                    'date_req1' => $date->format('d/m/Y'),
-                    'date_req2' => $date->format('d/m/Y'),
-                    'VAL_NM_RQ' => $cbrId,
-                ]);
-
-            if ($response->failed()) {
-                throw new CbrConnectionException(
-                    sprintf('Не удалось получить данные валюты %s от ЦБ РФ. HTTP Статус: %d', $cbrId, $response->status())
-                );
-            }
-
-            return $response->body();
-
-        } catch (ConnectionException $e) {
-            if (str_contains(strtolower($e->getMessage()), 'timeout') || str_contains(strtolower($e->getMessage()), 'timed out')) {
-                throw new CbrTimeoutException('Превышено время ожидания ответа от ЦБ РФ', 0, $e);
-            }
-            throw new CbrConnectionException('Ошибка подключения к ЦБ РФ: '.$e->getMessage(), 0, $e);
-        } catch (Throwable $e) {
-            if ($e instanceof CbrException) {
-                throw $e;
-            }
-            throw new CbrException('Непредвиденная ошибка при запросе курса валюты: '.$e->getMessage(), 0, $e);
         }
     }
 }

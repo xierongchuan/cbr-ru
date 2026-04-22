@@ -9,12 +9,7 @@ use Carbon\Carbon;
 interface ExchangeRatesClientInterface
 {
     /**
-     * Получить сырые данные с курсами валют на текущую дату (XML).
+     * Получить сырые данные с курсами валют на указанную дату (XML).
      */
-    public function getDailyRatesRawData(): string;
-
-    /**
-     * Получить сырые данные с курсом конкретной валюты на указанную дату (XML).
-     */
-    public function getCurrencyRatesRawData(string $cbrId, Carbon $date): string;
+    public function getDailyRatesRawData(?Carbon $date = null): string;
 }

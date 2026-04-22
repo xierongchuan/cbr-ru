@@ -19,6 +19,8 @@ class SettingsService
 
     private const string KEY_WIDGET_UPDATE_INTERVAL = 'widget_update_interval';
 
+    private const string KEY_FETCH_DATE_OFFSET = 'fetch_date_offset';
+
     /**
      * Получить значение настройки с кэшированием.
      *
@@ -28,11 +30,18 @@ class SettingsService
      */
     public function get(string $key, mixed $default = null): mixed
     {
-        return Cache::remember(self::CACHE_KEY_PREFIX.$key, self::CACHE_TTL, function () use ($key, $default) {
+        try {
+            return Cache::remember(self::CACHE_KEY_PREFIX.$key, self::CACHE_TTL, function () use ($key, $default) {
+                $setting = Setting::where('key', $key)->first();
+
+                return $setting ? $setting->value : $default;
+            });
+        } catch (\Throwable $e) {
+            // Если кэш не доступен (например, в тестах), возвращаем из БД
             $setting = Setting::where('key', $key)->first();
 
             return $setting ? $setting->value : $default;
-        });
+        }
     }
 
     /**
@@ -48,7 +57,11 @@ class SettingsService
             ['value' => $value]
         );
 
-        Cache::put(self::CACHE_KEY_PREFIX.$key, $value, self::CACHE_TTL);
+        try {
+            Cache::put(self::CACHE_KEY_PREFIX.$key, $value, self::CACHE_TTL);
+        } catch (\Throwable $e) {
+            // Если кэш не доступен, игнорируем
+        }
     }
 
     /**
@@ -77,5 +90,13 @@ class SettingsService
     public function getWidgetUpdateInterval(): int
     {
         return (int) $this->get(self::KEY_WIDGET_UPDATE_INTERVAL, 60);
+    }
+
+    /**
+     * Смещение даты для загрузки курсов (0 = сегодня, 1 = завтра).
+     */
+    public function getFetchDateOffset(): int
+    {
+        return (int) $this->get(self::KEY_FETCH_DATE_OFFSET, 0);
     }
 }

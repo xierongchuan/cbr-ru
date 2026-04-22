@@ -36,9 +36,9 @@ class SettingController extends Controller
 
         return response()->json([
             'available_currencies' => $availableCurrencies,
-            'cbr_fetch_currencies' => $this->settingsService->get('cbr_fetch_currencies', ['USD', 'EUR', 'CNY']),
             'widget_currencies' => $this->settingsService->getWidgetCurrencies(),
             'widget_update_interval' => $this->settingsService->getWidgetUpdateInterval(),
+            'fetch_date_offset' => $this->settingsService->getFetchDateOffset(),
         ]);
     }
 
@@ -59,6 +59,10 @@ class SettingController extends Controller
 
         if (isset($validated['widget_update_interval'])) {
             $this->settingsService->set('widget_update_interval', $validated['widget_update_interval']);
+        }
+
+        if (isset($validated['fetch_date_offset'])) {
+            $this->settingsService->set('fetch_date_offset', $validated['fetch_date_offset']);
         }
 
         return response()->json(['message' => 'Настройки обновлены']);

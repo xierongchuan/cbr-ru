@@ -42,7 +42,7 @@ class WidgetController extends Controller
                 $query->whereIn('char_code', $currencies);
             })
                 ->where('date', $today)
-                ->with('currency:id,char_code,name') // Загружаем связанные данные валюты
+                ->with('currency:id,char_code,name,nominal') // Загружаем связанные данные валюты
                 ->get()
                 ->keyBy('currency.char_code'); // Индексируем по коду валюты
 
@@ -67,6 +67,7 @@ class WidgetController extends Controller
                     'currency' => $todayRate ? [
                         'char_code' => $todayRate->currency->char_code,
                         'name' => $todayRate->currency->name,
+                        'nominal' => $todayRate->currency->nominal,
                     ] : null, // Информация о валюте (если данные есть)
                     'today' => $todayRate ? [
                         'value' => $todayRate->value,

@@ -144,7 +144,7 @@ podman compose exec app php artisan list
 - **CbrXmlParser:** Парсер XML-ответов ЦБ
 - **SettingsService:** Управление настройками приложения
 - **FetchCbrRatesCommand:** Команда для синхронизации настроенных валют
-- **FetchAllCbrRatesCommand:** Команда для первоначальной синхронизации всех валют
+- **FetchAllCbrRatesCommand:** Команда для синхронизации ВСЕХ валют (используется при запуске)
 
 ## **Разработка**
 

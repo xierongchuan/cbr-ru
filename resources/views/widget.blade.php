@@ -175,17 +175,17 @@
                 if (change > 0) {
                     changeIndicator = '+' + formatCurrency(change);
                     changeText = `+${changePercent}%`;
-                    changeClass = 'text-red-600 bg-red-50';
-                    changeBgClass = 'bg-red-500';
-                    trendIcon = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    changeClass = 'text-green-600 bg-green-50';
+                    changeBgClass = 'bg-green-500';
+                    trendIcon = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                     </svg>`;
                 } else if (change < 0) {
                     changeIndicator = formatCurrency(change);
                     changeText = `${changePercent}%`;
-                    changeClass = 'text-green-600 bg-green-50';
-                    changeBgClass = 'bg-green-500';
-                    trendIcon = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    changeClass = 'text-red-600 bg-red-50';
+                    changeBgClass = 'bg-red-500';
+                    trendIcon = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                     </svg>`;
                 } else {
@@ -200,6 +200,7 @@
             }
 
             const currencyName = rateData.currency ? rateData.currency.name : currencyCode;
+            const nominal = rateData.currency ? rateData.currency.nominal : 1;
             const currentValue = rateData.today ? formatCurrency(rateData.today.value) : 'Н/Д';
             const vunitRate = rateData.today ? formatCurrency(rateData.today.vunit_rate) : 'Н/Д';
 
@@ -210,7 +211,10 @@
                             ${currencyCode}
                         </div>
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">${currencyCode}</h3>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">${currencyCode}</h3>
+                                ${nominal > 1 ? `<span class="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">${nominal} шт</span>` : ''}
+                            </div>
                             <p class="text-sm text-gray-600">${currencyName}</p>
                         </div>
                     </div>
@@ -224,7 +228,7 @@
 
                 <div class="space-y-3">
                     <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Текущий курс</span>
+                        <span class="text-sm text-gray-600">За номинал${nominal > 1 ? ` (${nominal} шт)` : ''}</span>
                         <span class="text-2xl font-bold text-gray-900 font-mono">${currentValue}</span>
                     </div>
                     <div class="flex justify-between items-center">

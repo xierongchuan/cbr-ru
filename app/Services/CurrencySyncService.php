@@ -22,44 +22,33 @@ class CurrencySyncService
 
     /**
      * Выполняет синхронизацию курсов валют из внешнего API в БД.
-     * Оптимизировано: запрашивает только настроенные валюты, если их CBR ID известны.
+     *
+     * @param  Carbon|null  $date  Дата для синхронизации (по умолчанию - сегодня с учетом offset)
      */
-    public function sync(): void
+    public function sync(?Carbon $date = null): void
     {
-        Log::channel('cbr')->info('Начало синхронизации курсов валют с ЦБ РФ.');
+        if ($date === null) {
+            $offset = $this->settingsService->getFetchDateOffset();
+            $date = Carbon::today()->addDays($offset);
+        }
+
+        Log::channel('cbr')->info("Начало синхронизации курсов валют с ЦБ РФ за {$date->format('d.m.Y')}.");
 
         try {
             $allowedCurrencies = $this->settingsService->getCbrFetchCurrencies();
-            $today = Carbon::today();
 
-            // Получаем валюты из БД с их CBR ID
-            $currenciesInDb = Currency::whereIn('char_code', $allowedCurrencies)
-                ->pluck('cbr_id', 'char_code');
+            // Запрашиваем курсы на указанную дату
+            $xmlRawData = $this->client->getDailyRatesRawData($date);
+            $allDtos = $this->parser->parse($xmlRawData);
 
-            $dtos = collect();
+            // Фильтруем только разрешенные валюты
+            $dtos = collect($allDtos)->filter(fn ($dto) => in_array($dto->charCode, $allowedCurrencies, true));
 
-            // Если все валюты имеют CBR ID, запрашиваем индивидуально
-            if ($currenciesInDb->filter()->count() === count($allowedCurrencies)) {
-                Log::channel('cbr')->info('Все валюты имеют CBR ID, запрашиваем индивидуально.');
-                foreach ($allowedCurrencies as $charCode) {
-                    $cbrId = $currenciesInDb[$charCode];
-                    $xmlRawData = $this->client->getCurrencyRatesRawData($cbrId, $today);
-                    $parsedDtos = $this->parser->parse($xmlRawData);
-                    $dtos = $dtos->merge($parsedDtos);
-                }
-            } else {
-                // Иначе запрашиваем все и фильтруем
-                Log::channel('cbr')->info('Не все валюты имеют CBR ID, запрашиваем все валюты.');
-                $xmlRawData = $this->client->getDailyRatesRawData();
-                $allDtos = $this->parser->parse($xmlRawData);
-                $dtos = collect($allDtos)->filter(fn ($dto) => in_array($dto->charCode, $allowedCurrencies, true));
-            }
-
-            DB::transaction(function () use ($dtos, $today) {
+            DB::transaction(function () use ($dtos, $date) {
                 $savedCount = 0;
 
                 foreach ($dtos as $dto) {
-                    // Обновляем или создаем валюту с CBR ID
+                    // Обновляем или создаем валюту
                     $currency = Currency::updateOrCreate(
                         ['char_code' => $dto->charCode],
                         [
@@ -69,11 +58,11 @@ class CurrencySyncService
                         ]
                     );
 
-                    // Сохраняем курс валюты на сегодня
+                    // Сохраняем курс валюты на указанную дату
                     Rate::updateOrCreate(
                         [
                             'currency_id' => $currency->id,
-                            'date' => $today,
+                            'date' => $date,
                         ],
                         [
                             'value' => $dto->value,
@@ -84,7 +73,7 @@ class CurrencySyncService
                     $savedCount++;
                 }
 
-                Log::channel('cbr')->info("Синхронизация успешно завершена. Обновлено валют: {$savedCount}");
+                Log::channel('cbr')->info("Синхронизация за {$date->format('d.m.Y')} завершена. Обновлено валют: {$savedCount}");
             });
 
         } catch (\Throwable $e) {
