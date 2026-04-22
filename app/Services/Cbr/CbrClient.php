@@ -15,13 +15,30 @@ use Throwable;
 
 class CbrClient implements ExchangeRatesClientInterface
 {
-    private string $url;
+    private const string ENDPOINT_DAILY = '/scripts/XML_daily.asp';
+
+    private const string ENDPOINT_VALUTES = '/scripts/XML_val.asp';
+
+    private const string ENDPOINT_DYNAMIC = '/scripts/XML_dynamic.asp';
 
     private const int TIMEOUT_SECONDS = 10;
 
+    private readonly string $baseUrl;
+
     public function __construct()
     {
-        $this->url = config('services.cbr_api_url');
+        $this->baseUrl = config('services.cbr_api_base_url');
+    }
+
+    public function getDailyRatesRawData(?Carbon $date = null): string
+    {
+        $url = $this->baseUrl.self::ENDPOINT_DAILY;
+
+        if ($date) {
+            $url .= '?date_req='.$date->format('d/m/Y');
+        }
+
+        return $this->executeRequest($url, $date?->format('d.m.Y'));
     }
 
     /**
@@ -33,19 +50,14 @@ class CbrClient implements ExchangeRatesClientInterface
      * @throws CbrTimeoutException
      * @throws CbrException
      */
-    public function getDailyRatesRawData(?Carbon $date = null): string
+    private function executeRequest(string $url, ?string $dateInfo = null): string
     {
-        $url = $this->url;
-        if ($date) {
-            $url .= '?date_req='.$date->format('d/m/Y');
-        }
-
         try {
             $response = Http::timeout(self::TIMEOUT_SECONDS)
                 ->get($url);
 
             if ($response->failed()) {
-                $dateStr = $date ? ' за '.$date->format('d.m.Y') : '';
+                $dateStr = $dateInfo ? ' за '.$dateInfo : '';
                 throw new CbrConnectionException(
                     sprintf('Не удалось получить данные от ЦБ РФ%s. HTTP Статус: %d', $dateStr, $response->status())
                 );
