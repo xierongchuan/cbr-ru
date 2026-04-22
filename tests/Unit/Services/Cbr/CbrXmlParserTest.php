@@ -48,7 +48,7 @@ XML;
         // Эмулируем реальный ответ ЦБ: конвертируем строку в Windows-1251
         $xmlWindows1251 = mb_convert_encoding($xmlUtf8, 'Windows-1251', 'UTF-8');
 
-        $dtos = $this->parser->parse($xmlWindows1251);
+        $dtos = $this->parser->parseDailyRates($xmlWindows1251);
 
         $this->assertCount(2, $dtos);
         $this->assertContainsOnlyInstancesOf(CurrencyRateDto::class, $dtos);
@@ -71,7 +71,7 @@ XML;
 </ValCurs>
 XML;
         $xml = mb_convert_encoding($xmlUtf8, 'Windows-1251', 'UTF-8');
-        $dtos = $this->parser->parse($xml);
+        $dtos = $this->parser->parseDailyRates($xml);
 
         $dto = $dtos[0];
         $this->assertSame('R01235', $dto->cbrId);
@@ -100,7 +100,7 @@ XML;
 </ValCurs>
 XML;
         $xml = mb_convert_encoding($xmlUtf8, 'Windows-1251', 'UTF-8');
-        $dtos = $this->parser->parse($xml);
+        $dtos = $this->parser->parseDailyRates($xml);
 
         $this->assertSame(15.8874, $dtos[0]->value);
         $this->assertSame(0.158874, $dtos[0]->vunitRate);
@@ -115,7 +115,7 @@ XML;
 </ValCurs>
 XML;
         $xml = mb_convert_encoding($xmlUtf8, 'Windows-1251', 'UTF-8');
-        $dtos = $this->parser->parse($xml);
+        $dtos = $this->parser->parseDailyRates($xml);
 
         $this->assertIsArray($dtos);
         $this->assertEmpty($dtos);
@@ -127,7 +127,7 @@ XML;
         $this->expectException(CbrException::class);
         $this->expectExceptionMessageMatches('/Ошибка парсинга XML/');
 
-        $this->parser->parse('this is not xml at all <<broken>>');
+        $this->parser->parseDailyRates('this is not xml at all <<broken>>');
     }
 
     #[Test]
@@ -135,6 +135,6 @@ XML;
     {
         $this->expectException(CbrException::class);
 
-        $this->parser->parse('');
+        $this->parser->parseDailyRates('');
     }
 }

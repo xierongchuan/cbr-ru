@@ -30,15 +30,57 @@ class CbrClient implements ExchangeRatesClientInterface
         $this->baseUrl = config('services.cbr_api_base_url');
     }
 
-    public function getDailyRatesRawData(?Carbon $date = null): string
+    public function getDailyRatesOnDate(?Carbon $date = null, bool $monthly = false): string
     {
         $url = $this->baseUrl.self::ENDPOINT_DAILY;
 
+        $queryParams = [];
+
         if ($date) {
-            $url .= '?date_req='.$date->format('d/m/Y');
+            $queryParams['date_req'] = $date->format('d/m/Y');
+        }
+
+        if ($monthly) {
+            $queryParams['d'] = 1;
+        }
+
+        if ($queryParams) {
+            $url .= '?'.http_build_query($queryParams);
         }
 
         return $this->executeRequest($url, $date?->format('d.m.Y'));
+    }
+
+    /**
+     * Получить справочник валют ЦБ РФ.
+     *
+     * @param  bool  $monthly  true = ежемесячные коды, false = ежедневные
+     * @return string XML со справочником валют
+     */
+    public function getCurrencyDictionary(bool $monthly = false): string
+    {
+        $url = $this->baseUrl.self::ENDPOINT_VALUTES.'?d='.($monthly ? 1 : 0);
+
+        return $this->executeRequest($url);
+    }
+
+    /**
+     * Получить динамику курса конкретной валюты за период.
+     *
+     * @param  string  $cbrId  ID валюты в ЦБ (например, R01235 для USD)
+     * @param  Carbon  $from  Дата начала периода
+     * @param  Carbon  $to  Дата окончания периода
+     * @return string XML с динамикой курсов
+     */
+    public function getCurrencyDynamics(string $cbrId, Carbon $from, Carbon $to): string
+    {
+        $url = $this->baseUrl.self::ENDPOINT_DYNAMIC.'?'.http_build_query([
+            'date_req1' => $from->format('d/m/Y'),
+            'date_req2' => $to->format('d/m/Y'),
+            'VAL_NM_RQ' => $cbrId,
+        ]);
+
+        return $this->executeRequest($url, "{$from->format('d.m.Y')}-{$to->format('d.m.Y')}");
     }
 
     /**

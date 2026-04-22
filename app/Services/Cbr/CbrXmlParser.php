@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Cbr;
 
+use App\DTO\CurrencyCodeDto;
+use App\DTO\CurrencyHistoryDto;
 use App\DTO\CurrencyRateDto;
 use App\Exceptions\Cbr\CbrException;
 use App\Exceptions\Cbr\CbrParseException;
@@ -11,21 +13,17 @@ use Throwable;
 
 class CbrXmlParser
 {
-    /**
-     * Кодировка ответа ЦБ РФ.
-     */
     private const string CBR_ENCODING = 'Windows-1251';
 
     /**
-     * Парсит XML ответ от ЦБ и возвращает массив DTO.
-     * Автоматически конвертирует кодировку Windows-1251 -> UTF-8.
+     * Парсит XML дневных курсов валют.
      *
      * @param  string  $xmlContent  Сырой XML в кодировке Windows-1251
      * @return array<CurrencyRateDto>
      *
      * @throws CbrException
      */
-    public function parse(string $xmlContent): array
+    public function parseDailyRates(string $xmlContent): array
     {
         try {
             $xmlContent = $this->convertToUtf8($xmlContent);
@@ -43,7 +41,6 @@ class CbrXmlParser
             $dtos = [];
 
             foreach ($xml->Valute as $valute) {
-                // ЦБ использует запятую как разделитель дробной части: 53,4510 -> 53.4510
                 $value = (float) str_replace(',', '.', (string) $valute->Value);
                 $vunitRate = (float) str_replace(',', '.', (string) $valute->VunitRate);
 
@@ -69,16 +66,95 @@ class CbrXmlParser
     }
 
     /**
-     * Конвертирует строку из Windows-1251 в UTF-8 и обновляет XML-декларацию.
+     * Парсит XML справочник валют.
      *
-     * @param  string  $content  Содержимое XML в кодировке Windows-1251
-     * @return string Содержимое XML в кодировке UTF-8
+     * @param  string  $xmlContent  Сырой XML в кодировке Windows-1251
+     * @return array<CurrencyCodeDto>
      */
+    public function parseCurrencyDictionary(string $xmlContent): array
+    {
+        try {
+            $xmlContent = $this->convertToUtf8($xmlContent);
+
+            libxml_use_internal_errors(true);
+            $xml = simplexml_load_string($xmlContent);
+
+            if ($xml === false) {
+                $errors = libxml_get_errors();
+                libxml_clear_errors();
+                $errorMessage = isset($errors[0]) ? trim($errors[0]->message) : 'Unknown XML parsing error';
+                throw new CbrParseException('Ошибка парсинга справочника валют: '.$errorMessage);
+            }
+
+            $dtos = [];
+
+            foreach ($xml->Valute as $valute) {
+                $dtos[] = new CurrencyCodeDto(
+                    cbrId: (string) $valute['ID'],
+                    numCode: (string) $valute->NumCode,
+                    charCode: (string) $valute->CharCode,
+                    name: (string) $valute->Name,
+                );
+            }
+
+            return $dtos;
+
+        } catch (Throwable $e) {
+            if ($e instanceof CbrException) {
+                throw $e;
+            }
+            throw new CbrException('Непредвиденная ошибка при парсинге справочника: '.$e->getMessage(), 0, $e);
+        }
+    }
+
+    /**
+     * Парсит XML динамики курсов валют.
+     *
+     * @param  string  $xmlContent  Сырой XML в кодировке Windows-1251
+     * @return array<CurrencyHistoryDto>
+     */
+    public function parseCurrencyDynamics(string $xmlContent): array
+    {
+        try {
+            $xmlContent = $this->convertToUtf8($xmlContent);
+
+            libxml_use_internal_errors(true);
+            $xml = simplexml_load_string($xmlContent);
+
+            if ($xml === false) {
+                $errors = libxml_get_errors();
+                libxml_clear_errors();
+                $errorMessage = isset($errors[0]) ? trim($errors[0]->message) : 'Unknown XML parsing error';
+                throw new CbrParseException('Ошибка парсинга динамики курсов: '.$errorMessage);
+            }
+
+            $dtos = [];
+
+            foreach ($xml->Record as $record) {
+                $value = (float) str_replace(',', '.', (string) $record->Value);
+                $vunitRate = (float) str_replace(',', '.', (string) $record->VunitRate);
+
+                $dtos[] = new CurrencyHistoryDto(
+                    date: (string) $record['Date'],
+                    value: $value,
+                    vunitRate: $vunitRate,
+                );
+            }
+
+            return $dtos;
+
+        } catch (Throwable $e) {
+            if ($e instanceof CbrException) {
+                throw $e;
+            }
+            throw new CbrException('Непредвиденная ошибка при парсинге динамики: '.$e->getMessage(), 0, $e);
+        }
+    }
+
     private function convertToUtf8(string $content): string
     {
         $converted = mb_convert_encoding($content, 'UTF-8', self::CBR_ENCODING);
 
-        // Заменяем объявление кодировки в заголовке XML
         return str_replace(
             'encoding="windows-1251"',
             'encoding="UTF-8"',

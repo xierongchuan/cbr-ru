@@ -38,8 +38,8 @@ class CurrencySyncService
             $allowedCurrencies = $this->settingsService->getCbrFetchCurrencies();
 
             // Запрашиваем курсы на указанную дату
-            $xmlRawData = $this->client->getDailyRatesRawData($date);
-            $allDtos = $this->parser->parse($xmlRawData);
+            $xmlRawData = $this->client->getDailyRatesOnDate($date);
+            $allDtos = $this->parser->parseDailyRates($xmlRawData);
 
             // Фильтруем только разрешенные валюты
             $dtos = collect($allDtos)->filter(fn ($dto) => in_array($dto->charCode, $allowedCurrencies, true));
