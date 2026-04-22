@@ -11,6 +11,12 @@ use App\Exceptions\Cbr\CbrException;
 use App\Exceptions\Cbr\CbrParseException;
 use Throwable;
 
+/**
+ * Парсер XML-ответов от API ЦБ РФ.
+ *
+ * Преобразует XML в кодировке Windows-1251 в массивы DTO.
+ * Конвертирует запятую в десятичном разделителе на точку.
+ */
 class CbrXmlParser
 {
     private const string CBR_ENCODING = 'Windows-1251';
@@ -151,6 +157,12 @@ class CbrXmlParser
         }
     }
 
+    /**
+     * Конвертирует XML из Windows-1251 в UTF-8.
+     *
+     * @param  string  $content  XML в кодировке Windows-1251
+     * @return string XML в кодировке UTF-8
+     */
     private function convertToUtf8(string $content): string
     {
         $converted = mb_convert_encoding($content, 'UTF-8', self::CBR_ENCODING);

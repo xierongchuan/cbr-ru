@@ -13,6 +13,16 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
+/**
+ * Клиент для работы с API ЦБ РФ.
+ *
+ * Эндпоинты API:
+ * - XML_daily.asp     — курсы валют на дату
+ * - XML_val.asp      — справочник валют
+ * - XML_dynamic.asp — динамика курсов валюты
+ *
+ * Все ответы возвращаются в формате XML в кодировке Windows-1251.
+ */
 class CbrClient implements ExchangeRatesClientInterface
 {
     private const string ENDPOINT_DAILY = '/scripts/XML_daily.asp';
@@ -30,8 +40,17 @@ class CbrClient implements ExchangeRatesClientInterface
         $this->baseUrl = config('services.cbr_api_base_url');
     }
 
-    public function getDailyRatesOnDate(?Carbon $date = null, bool $monthly = false): string
-    {
+    /**
+     * Получить курсы валют на указанную дату.
+     *
+     * @param  Carbon|null  $date  Дата (null = последние данные)
+     * @param  bool  $monthly  true = ежемесячные курсы, false = ежедневные
+     * @return string XML с курсами валют
+     */
+    public function getDailyRatesOnDate(
+        ?Carbon $date = null,
+        bool $monthly = false,
+    ): string {
         $url = $this->baseUrl.self::ENDPOINT_DAILY;
 
         $queryParams = [];
@@ -59,7 +78,11 @@ class CbrClient implements ExchangeRatesClientInterface
      */
     public function getCurrencyDictionary(bool $monthly = false): string
     {
-        $url = $this->baseUrl.self::ENDPOINT_VALUTES.'?d='.($monthly ? 1 : 0);
+        $url =
+            $this->baseUrl.
+            self::ENDPOINT_VALUTES.
+            '?d='.
+            ($monthly ? 1 : 0);
 
         return $this->executeRequest($url);
     }
@@ -72,51 +95,83 @@ class CbrClient implements ExchangeRatesClientInterface
      * @param  Carbon  $to  Дата окончания периода
      * @return string XML с динамикой курсов
      */
-    public function getCurrencyDynamics(string $cbrId, Carbon $from, Carbon $to): string
-    {
-        $url = $this->baseUrl.self::ENDPOINT_DYNAMIC.'?'.http_build_query([
-            'date_req1' => $from->format('d/m/Y'),
-            'date_req2' => $to->format('d/m/Y'),
-            'VAL_NM_RQ' => $cbrId,
-        ]);
+    public function getCurrencyDynamics(
+        string $cbrId,
+        Carbon $from,
+        Carbon $to,
+    ): string {
+        $url =
+            $this->baseUrl.
+            self::ENDPOINT_DYNAMIC.
+            '?'.
+            http_build_query([
+                'date_req1' => $from->format('d/m/Y'),
+                'date_req2' => $to->format('d/m/Y'),
+                'VAL_NM_RQ' => $cbrId,
+            ]);
 
-        return $this->executeRequest($url, "{$from->format('d.m.Y')}-{$to->format('d.m.Y')}");
+        return $this->executeRequest(
+            $url,
+            "{$from->format('d.m.Y')}-{$to->format('d.m.Y')}",
+        );
     }
 
     /**
-     * Выполняет запрос к API ЦБ РФ и возвращает XML.
+     * Выполняет HTTP-запрос к API ЦБ РФ.
      *
-     * @return string XML с курсами валют
+     * @param  string  $url  Полный URL запроса
+     * @param  string|null  $dateInfo  Информация о дате для логирования
+     * @return string XML-ответ от API
      *
-     * @throws CbrConnectionException
-     * @throws CbrTimeoutException
-     * @throws CbrException
+     * @throws CbrConnectionException При ошибке соединения или HTTP-ошибке
+     * @throws CbrTimeoutException При таймауте
+     * @throws CbrException При других ошибках
      */
-    private function executeRequest(string $url, ?string $dateInfo = null): string
-    {
+    private function executeRequest(
+        string $url,
+        ?string $dateInfo = null,
+    ): string {
         try {
-            $response = Http::timeout(self::TIMEOUT_SECONDS)
-                ->get($url);
+            $response = Http::timeout(self::TIMEOUT_SECONDS)->get($url);
 
             if ($response->failed()) {
                 $dateStr = $dateInfo ? ' за '.$dateInfo : '';
                 throw new CbrConnectionException(
-                    sprintf('Не удалось получить данные от ЦБ РФ%s. HTTP Статус: %d', $dateStr, $response->status())
+                    sprintf(
+                        'Не удалось получить данные от ЦБ РФ%s. HTTP Статус: %d',
+                        $dateStr,
+                        $response->status(),
+                    ),
                 );
             }
 
             return $response->body();
-
         } catch (ConnectionException $e) {
-            if (str_contains(strtolower($e->getMessage()), 'timeout') || str_contains(strtolower($e->getMessage()), 'timed out')) {
-                throw new CbrTimeoutException('Превышено время ожидания ответа от ЦБ РФ', 0, $e);
+            if (
+                str_contains(strtolower($e->getMessage()), 'timeout') ||
+                str_contains(strtolower($e->getMessage()), 'timed out')
+            ) {
+                throw new CbrTimeoutException(
+                    'Превышено время ожидания ответа от ЦБ РФ',
+                    0,
+                    $e,
+                );
             }
-            throw new CbrConnectionException('Ошибка подключения к ЦБ РФ: '.$e->getMessage(), 0, $e);
+            throw new CbrConnectionException(
+                'Ошибка подключения к ЦБ РФ: '.$e->getMessage(),
+                0,
+                $e,
+            );
         } catch (Throwable $e) {
             if ($e instanceof CbrException) {
                 throw $e;
             }
-            throw new CbrException('Непредвиденная ошибка при запросе к ЦБ РФ: '.$e->getMessage(), 0, $e);
+            throw new CbrException(
+                'Непредвиденная ошибка при запросе к ЦБ РФ: '.
+                    $e->getMessage(),
+                0,
+                $e,
+            );
         }
     }
 }

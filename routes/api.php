@@ -18,18 +18,17 @@ use Illuminate\Support\Facades\Route;
  * - GET  /settings   — Текущие настройки
  * - PUT  /settings   — Обновить настройки
  */
-
-Route::prefix("v1")->group(function () {
+Route::prefix('v1')->group(function () {
     // Настройки приложения
-    Route::get("settings", [SettingController::class, "index"]);
-    Route::put("settings", [SettingController::class, "update"]);
+    Route::get('settings', [SettingController::class, 'index']);
+    Route::put('settings', [SettingController::class, 'update']);
 
     // Курсы валют на дату (сравнение с предыдущим днём)
-    Route::get("rates", [RatesController::class, "index"]);
+    Route::get('rates', [RatesController::class, 'index']);
 
     // Справочник валют
-    Route::get("currencies", [CurrenciesController::class, "index"]);
+    Route::get('currencies', [CurrenciesController::class, 'index']);
 
     // Динамика курсов валюты за период
-    Route::get("dynamics", [DynamicsController::class, "index"]);
+    Route::get('dynamics', [DynamicsController::class, 'index']);
 });

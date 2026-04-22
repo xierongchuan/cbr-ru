@@ -7,7 +7,7 @@
     <!-- TailwindCSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Heroicons -->
-    <script src="https://unpkg.com/heroicons@2.0.18/24/outline/index.js" type="module"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heroicons@24/outline/esm/index.js" type="module"></script>
     <!-- Chart.js for trends -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>

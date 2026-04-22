@@ -12,6 +12,12 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Сервис синхронизации курсов валют из API ЦБ РФ в БД.
+ *
+ * Загружает курсы валют с API ЦБ РФ и сохраняет их в базу данных.
+ * Фильтрует валюты согласно настройкам (cbr_fetch_currencies).
+ */
 class CurrencySyncService
 {
     public function __construct(
@@ -21,9 +27,12 @@ class CurrencySyncService
     ) {}
 
     /**
-     * Выполняет синхронизацию курсов валют из внешнего API в БД.
+     * Выполняет синхронизацию курсов валют из API ЦБ РФ в БД.
      *
-     * @param  Carbon|null  $date  Дата для синхронизации (по умолчанию - сегодня с учетом offset)
+     * Запрашивает курсы на указанную дату (или сегодня с учётом offset),
+     * парсит XML ответ и сохраняет данные в таблицы currencies и rates.
+     *
+     * @param  Carbon|null  $date  Дата для синхронизации (по умолчанию - сегодня с учётом offset)
      */
     public function sync(?Carbon $date = null): void
     {
@@ -32,9 +41,14 @@ class CurrencySyncService
             $date = Carbon::today()->addDays($offset);
         }
 
-        Log::channel('cbr')->info("Начало синхронизации курсов валют с ЦБ РФ за {$date->format('d.m.Y')}.");
+        Log::channel('cbr')->info(
+            "Начало синхронизации курсов валют с ЦБ РФ за {$date->format(
+                'd.m.Y',
+            )}.",
+        );
 
         try {
+            // Получаем список валют для загрузки из настроек
             $allowedCurrencies = $this->settingsService->getCbrFetchCurrencies();
 
             // Запрашиваем курсы на указанную дату
@@ -42,13 +56,15 @@ class CurrencySyncService
             $allDtos = $this->parser->parseDailyRates($xmlRawData);
 
             // Фильтруем только разрешенные валюты
-            $dtos = collect($allDtos)->filter(fn ($dto) => in_array($dto->charCode, $allowedCurrencies, true));
+            $dtos = collect($allDtos)->filter(
+                fn ($dto) => in_array($dto->charCode, $allowedCurrencies, true),
+            );
 
             DB::transaction(function () use ($dtos, $date) {
                 $savedCount = 0;
 
                 foreach ($dtos as $dto) {
-                    // Обновляем или создаем валюту
+                    // Обновляем или создаём валюту
                     $currency = Currency::updateOrCreate(
                         ['char_code' => $dto->charCode],
                         [
@@ -56,7 +72,7 @@ class CurrencySyncService
                             'nominal' => $dto->nominal,
                             'cbr_id' => $dto->cbrId,
                             'num_code' => $dto->numCode,
-                        ]
+                        ],
                     );
 
                     // Сохраняем курс валюты на указанную дату
@@ -68,21 +84,27 @@ class CurrencySyncService
                         [
                             'value' => $dto->value,
                             'vunit_rate' => $dto->vunitRate,
-                        ]
+                        ],
                     );
 
                     $savedCount++;
                 }
 
-                Log::channel('cbr')->info("Синхронизация за {$date->format('d.m.Y')} завершена. Обновлено валют: {$savedCount}");
+                Log::channel('cbr')->info(
+                    "Синхронизация за {$date->format(
+                        'd.m.Y',
+                    )} завершена. Обновлено валют: {$savedCount}",
+                );
             });
-
         } catch (\Throwable $e) {
-            Log::channel('cbr')->error('Ошибка синхронизации курсов валют: '.$e->getMessage(), [
-                'exception_class' => get_class($e),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
+            Log::channel('cbr')->error(
+                'Ошибка синхронизации курсов валют: '.$e->getMessage(),
+                [
+                    'exception_class' => get_class($e),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ],
+            );
 
             throw $e;
         }
