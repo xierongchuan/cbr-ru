@@ -29,9 +29,14 @@ class SettingController extends Controller
                 'name' => $currency->name,
             ]);
 
+        // Если валюты не загружены, возвращаем пустой массив
+        if ($availableCurrencies->isEmpty()) {
+            $availableCurrencies = collect();
+        }
+
         return response()->json([
             'available_currencies' => $availableCurrencies,
-            'cbr_fetch_currencies' => $this->settingsService->getCbrFetchCurrencies(),
+            'cbr_fetch_currencies' => $this->settingsService->get('cbr_fetch_currencies', ['USD', 'EUR', 'CNY']),
             'widget_currencies' => $this->settingsService->getWidgetCurrencies(),
             'widget_update_interval' => $this->settingsService->getWidgetUpdateInterval(),
         ]);

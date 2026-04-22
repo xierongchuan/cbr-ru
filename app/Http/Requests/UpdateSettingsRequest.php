@@ -28,9 +28,9 @@ class UpdateSettingsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'cbr_fetch_currencies' => 'sometimes|array',
+            'cbr_fetch_currencies' => 'sometimes|array|min:1',
             'cbr_fetch_currencies.*' => 'string|size:3',
-            'widget_currencies' => 'sometimes|array',
+            'widget_currencies' => 'sometimes|array|min:1',
             'widget_currencies.*' => 'string|size:3',
             'widget_update_interval' => 'sometimes|integer|min:10|max:3600',
         ];
@@ -45,9 +45,11 @@ class UpdateSettingsRequest extends FormRequest
     {
         return [
             'cbr_fetch_currencies.array' => 'cbr_fetch_currencies должно быть массивом.',
+            'cbr_fetch_currencies.min' => 'Выберите хотя бы одну валюту для загрузки из ЦБ.',
             'cbr_fetch_currencies.*.string' => 'Каждый код валюты должен быть строкой.',
             'cbr_fetch_currencies.*.size' => 'Код валюты должен состоять из 3 символов.',
             'widget_currencies.array' => 'widget_currencies должно быть массивом.',
+            'widget_currencies.min' => 'Выберите хотя бы одну валюту для виджета.',
             'widget_currencies.*.string' => 'Каждый код валюты должен быть строкой.',
             'widget_currencies.*.size' => 'Код валюты должен состоять из 3 символов.',
             'widget_update_interval.integer' => 'Интервал обновления должен быть целым числом.',
