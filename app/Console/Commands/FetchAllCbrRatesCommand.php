@@ -49,7 +49,7 @@ class FetchAllCbrRatesCommand extends Command
         try {
             // Загружаем все валюты на указанную дату
             $xmlRawData = $this->client->getDailyRatesOnDate($date);
-            $dtos = $this->parser->parse($xmlRawData);
+            $dtos = $this->parser->parseDailyRates($xmlRawData);
 
             DB::transaction(function () use ($dtos, $date) {
                 $savedCount = 0;
