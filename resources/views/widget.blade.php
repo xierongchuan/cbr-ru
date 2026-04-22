@@ -105,8 +105,10 @@
                 const response = await fetch('/api/v1/settings');
                 const data = await response.json();
                 updateInterval = data.widget_update_interval;
+                return data.widget_currencies || [];
             } catch (error) {
                 console.warn('Не удалось загрузить настройки, используем значения по умолчанию:', error);
+                return ['USD', 'EUR']; // fallback
             }
         }
 
@@ -115,7 +117,13 @@
             showLoading();
 
             try {
-                const response = await fetch('/api/v1/widget/rates');
+                const currencies = await loadSettings();
+                const today = new Date().toISOString().split('T')[0];
+                const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+                const url = `/api/v1/rates?date=${today}&compare_date=${yesterday}&currencies=${currencies.join(',')}`;
+
+                const response = await fetch(url);
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -123,7 +131,7 @@
 
                 const data = await response.json();
 
-                if (!data.rates || Object.keys(data.rates).length === 0) {
+                if (!data.rates || data.rates.length === 0) {
                     throw new Error('Нет данных о курсах валют');
                 }
 
@@ -146,8 +154,8 @@
             const container = document.getElementById('ratesContainer');
             container.innerHTML = '';
 
-            Object.entries(rates).forEach(([currencyCode, rateData]) => {
-                const card = createCurrencyCard(currencyCode, rateData);
+            rates.forEach((rateData) => {
+                const card = createCurrencyCard(rateData);
                 container.appendChild(card);
             });
 
@@ -156,7 +164,7 @@
         }
 
         // Функция создания карточки валюты
-        function createCurrencyCard(currencyCode, rateData) {
+        function createCurrencyCard(rateData) {
             const card = document.createElement('div');
             card.className = 'bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg hover:border-gray-300 transition-all duration-200 group';
 
@@ -165,9 +173,9 @@
             let changeText = '';
             let trendIcon = '';
 
-            if (rateData.today && rateData.yesterday) {
-                const todayValue = parseFloat(rateData.today.value);
-                const yesterdayValue = parseFloat(rateData.yesterday.value);
+            if (rateData.compare) {
+                const todayValue = parseFloat(rateData.value);
+                const yesterdayValue = parseFloat(rateData.compare.value);
                 const change = todayValue - yesterdayValue;
                 const changePercent = ((change / yesterdayValue) * 100).toFixed(2);
 
@@ -195,21 +203,21 @@
                 }
             }
 
-            const currencyName = rateData.currency ? rateData.currency.name : currencyCode;
-            const nominal = rateData.currency ? rateData.currency.nominal : 1;
-            const currentValue = rateData.today ? formatCurrency(rateData.today.value) : 'Н/Д';
-            const vunitRate = rateData.today ? formatCurrency(rateData.today.vunit_rate) : 'Н/Д';
+            const currencyName = rateData.name || rateData.char_code;
+            const nominal = rateData.nominal || 1;
+            const currentValue = formatCurrency(rateData.value);
+            const vunitRate = formatCurrency(rateData.vunit_rate);
 
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-4">
                     <div>
                         <div class="flex items-center gap-2">
-                            <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">${currencyCode}</h3>
+                            <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">${rateData.char_code}</h3>
                             ${nominal > 1 ? `<span class="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">${nominal} шт</span>` : ''}
                         </div>
                         <p class="text-sm text-gray-600">${currencyName}</p>
                     </div>
-                    ${rateData.today && rateData.yesterday ? `
+                    ${rateData.compare ? `
                         <div class="${changeClass} px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
                             ${trendIcon}
                             <span>${changeText}</span>
@@ -226,11 +234,11 @@
                         <span class="text-sm text-gray-600">За единицу</span>
                         <span class="text-lg font-semibold text-gray-700 font-mono">${vunitRate}</span>
                     </div>
-                    ${rateData.yesterday ? `
+                    ${rateData.compare ? `
                         <div class="pt-3 border-t border-gray-100">
                             <div class="flex justify-between items-center text-sm">
                                 <span class="text-gray-600">Вчера</span>
-                                <span class="font-mono text-gray-700">${formatCurrency(rateData.yesterday.value)}</span>
+                                <span class="font-mono text-gray-700">${formatCurrency(rateData.compare.value)}</span>
                             </div>
                         </div>
                     ` : ''}

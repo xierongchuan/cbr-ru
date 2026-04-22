@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['char_code', 'name', 'nominal', 'cbr_id'])]
+#[Fillable(['char_code', 'name', 'nominal', 'cbr_id', 'num_code'])]
 class Currency extends Model
 {
     protected $casts = [
@@ -16,6 +16,7 @@ class Currency extends Model
         'name' => 'string',
         'nominal' => 'integer',
         'cbr_id' => 'string',
+        'num_code' => 'string',
     ];
 
     public function rates(): HasMany

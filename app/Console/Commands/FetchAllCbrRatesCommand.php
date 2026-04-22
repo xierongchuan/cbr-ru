@@ -62,6 +62,7 @@ class FetchAllCbrRatesCommand extends Command
                             'name' => $dto->name,
                             'nominal' => $dto->nominal,
                             'cbr_id' => $dto->cbrId,
+                            'num_code' => $dto->numCode,
                         ]
                     );
 
